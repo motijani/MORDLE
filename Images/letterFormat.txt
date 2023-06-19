@@ -1,0 +1,6 @@
+Lucida Sans
+sz:24
+bold
+25x30
+angle -5
+centered
