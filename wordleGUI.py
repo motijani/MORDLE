@@ -2,18 +2,30 @@ from tkinter import *
 from tkinter import ttk
 from PIL import ImageTk, Image
 import os
-import random
-
+from controller import WordleController
+from process_and_predict import Process
 stage_bg = "#171717"  # A very dark grey
 
 class Mordle:
-    def __init__(self, root):
+    def __init__(self, root, word_to_solve):
         self.root = root
-        self.guess_row = 0
         self.canvas_width = 350
         self.canvas_height = 400
         self.updating_row = False
-        self.update_speed = 0
+        self.word_disp = Canvas(self.root,width=self.canvas_width, height=self.canvas_height, bg='#1d1d1d', bd = 2, relief='solid', highlightbackground='#333333')
+        self.boxes = []
+        self.image_list = []
+        self.letterImages = []
+        self.create_title()
+        self.word_disp.pack()
+        self.create_grid()
+        self.root.configure(background=stage_bg)
+        self.root.bind('<KeyPress>', self.onKeyPress)
+        self.update_speed = 0 #How fast the boxes update after input
+        self.guess_row = 0 #Counter to keep track of the guess row currently on
+        self.sol_word = word_to_solve
+        print('SOLUTION ', word_to_solve)
+        #Grid for the word guesses, easier to visualize
         self.word_guess = [
             ['', '', '', '', ''],
             ['', '', '', '', ''],
@@ -21,25 +33,9 @@ class Mordle:
             ['', '', '', '', ''],
             ['', '', '', '', '']
         ]
-        self.sol_word = self.pick_word()
-        print(self.sol_word)
-        self.boxes = []
-        self.image_list = []
-        self.letterImages = []
-        self.create_title()
-        self.word_disp = Canvas(self.root,width=self.canvas_width, height=self.canvas_height, bg='#1d1d1d', bd = 2, relief='solid', highlightbackground='#333333')
-        self.word_disp.pack()
-        self.create_grid()
-        self.root.configure(background=stage_bg)
-        self.root.bind('<KeyPress>', self.onKeyPress)
-    def pick_word(self):
-        __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__))) # Getting current file directory
-        word_file_path = os.path.join(__location__,'Training_Data','shuffled_data.txt')
-        with open(word_file_path) as file:
-            wordList = file.readlines()
-        wordList = [word.strip() for word in wordList]
-        return random.choice(wordList).lower()
+        self.process = Process()
+    
+
     def create_grid(self):
         box_size = 70
         box_size = 65
@@ -146,6 +142,7 @@ class Mordle:
                     self.guess_row += 1
                     self.updating_row = True
                     self.update_boxes(0)
+                    self.process.model_predict(self.sol_word, self.word_guess[self.guess_row-1])
             else:
                 print("Row not completed")
             print("Enter")
@@ -163,7 +160,3 @@ class Mordle:
                 print('last row occupied, awaiting enter or backspace')
         # else:
         #     print("Not valid entry")
-root = Tk()
-root.geometry("900x1000")
-start = Mordle(root)
-root.mainloop()
